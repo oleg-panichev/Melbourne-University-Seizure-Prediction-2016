@@ -14,11 +14,6 @@ from sklearn import datasets
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 
-# Preprocessing
-from sklearn.preprocessing import robust_scale, PolynomialFeatures
-from sklearn.decomposition import PCA
-from sklearn.decomposition import FastICA
-
 # Classifiers:
 from sklearn import svm
 from sklearn.ensemble import AdaBoostClassifier
@@ -65,40 +60,36 @@ class CustomEnsembleClassifier(BaseEstimator, ClassifierMixin):
         self.predictions_ = list()
         for classifier in self.classifiers:
             self.predictions_.append(classifier.predict_proba(X))
-            # print self.predictions_
-        # print 'dskfnadslkjfn'
-        # print len(self.predictions_)
-
-        # # Normalize predictions
-        # for c_i in range(0, len(self.predictions_)):
-        #     probas = self.predictions_[c_i][:, 0]
-        #     probas_n = probas - np.min(probas)
-        #     probas_factor = 1 / np.max(probas_n)
-        #     self.predictions_[c_i][:, 0] = probas_n * probas_factor
-        #
-        #     probas = self.predictions_[c_i][:, 1]
-        #     probas_n = probas - np.min(probas)
-        #     probas_factor = 1 / np.max(probas_n)
-        #     self.predictions_[c_i][:, 1] = probas_n * probas_factor
 
         return np.mean(self.predictions_, axis=0)
-        # return np.median(self.predictions_, axis=0)
-        # return np.prod(self.predictions_, axis=0)
 
-        # mproba = np.empty(self.predictions_[0].shape)
-        # c_buf = np.empty(len(self.predictions_))
-        # for i in range(0, self.predictions_[0].shape[0]):
-        #     for c_i in range (0, len(self.predictions_)):
-        #         c_buf[c_i] = self.predictions_[c_i][i, 0]
-        #     mproba[i, 0] = np.mean(np.sort(c_buf)[1:-1])
-        #
-        #     for c_i in range (0, len(self.predictions_)):
-        #         c_buf[c_i] = self.predictions_[c_i][i, 1]
-        #     mproba[i, 1] = np.mean(np.sort(c_buf)[1:-1])
+def model_create(type):
+    if type == 'ada55':
+        classifier = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
+                         algorithm="SAMME",
+                         n_estimators=5)
+    elif type == 'xgb':
+        classifier = xgboost.XGBClassifier(n_estimators=800)
+    elif type == 'gb':
+        classifier = GradientBoostingClassifier(n_estimators=1000) 
+    elif type == 'rf':
+        classifier = RandomForestClassifier() 
+    elif type == 'gs1':
+        param_grid = {"base_estimator__criterion" : ["gini"], "base_estimator__splitter" :   ["best"],  "n_estimators": [3,5, 6]}
+        DTC = DecisionTreeClassifier(max_depth=5)
+        ABC = AdaBoostClassifier(base_estimator = DTC, algorithm="SAMME", learning_rate=1, n_estimators=5)
+        clf1 = GridSearchCV(ABC, param_grid=param_grid, scoring = 'roc_auc')
+        clf2 = GradientBoostingClassifier(n_estimators=1000)
+        clf3 = BaggingClassifier()
+        classifier = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('rtf', clf3)], voting='soft') 
+    elif type == 'gs2':
+        clf1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5), algorithm="SAMME")
+        param_grid = {'n_estimators': [4, 5, 6]}
+        classifier = GridSearchCV(clf1, param_grid=param_grid, scoring='roc_auc')
+    elif type == 'rf_reina':
+        classifier = RandomForestClassifier(n_estimators=50) 
 
-        return mproba
 
-def model_create():
     # classifier = svm.SVC(kernel='rbf', probability=True,
     #                      random_state=None)
 
@@ -271,9 +262,6 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
             for j in range(0, epoch_num, 1):
                 test_full[k*epoch_num + j] = test[k]*epoch_num + j
 
-        # print train_full
-        # print y[train_full]
-
         # print 'Model fitting...'
         classifier = model_create()
         if len(valid_signal_flags_train) > 0:
@@ -283,7 +271,6 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
 
         # print 'Predicting...'
         probas = model_predict(classifier, x[test_full])
-        # print probas_[y[train]]
 
         if len(valid_signal_flags_train) > 0:
             p, p_x = prob_decide(probas[:, 1], valid_signal_flags_train[test_full], epoch_num)
@@ -292,14 +279,6 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
 
         probabilities[test] = p
         probabilities_epoch[test, :] = p_x
-
-        # Probas normalization
-        # p = p - np.min(p)
-        # p_factor = 1 / np.max(p)
-        # p = p * p_factor
-
-        # classifier = model_create()
-        # classifier = model_fit(classifier, p_x, y[train_full])
 
         # Compute ROC curve and area the curve
         fpr, tpr, thresholds = roc_curve(y_r[test], p)
@@ -336,7 +315,7 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
     # plt.draw()
 
     return mean_auc, best_classifier, probabilities, y_r, probabilities_epoch
-# In[ ]:
+
 
 def model_run(x, y, valid_signal_flags_train, x_test):
     print 'Creating model on whole train set...'
@@ -350,8 +329,6 @@ def model_run(x, y, valid_signal_flags_train, x_test):
     return p
 
 
-# In[ ]:
-
 def prob_decide(p, valid_signal_flags, epoch_num):
     N = p.shape
     N = N[0]
@@ -360,27 +337,9 @@ def prob_decide(p, valid_signal_flags, epoch_num):
     p_res = np.zeros(M)
     p_x = np.zeros((M, epoch_num))
 
-    # print valid_signal_flags.shape
     idx = 0
     for i in range(0, N - N%epoch_num, epoch_num):
-        # print len(p[i:i+epoch_num])
         p_res[idx] = np.mean(p[i:i+epoch_num])
-        # print p[i:i+epoch_num]
-        # print 'p_res[idx] = ' + str(p_res[idx])
-        # p_sorted = np.sort(p[i:i+epoch_num])
-        # p_res[idx] = np.mean(p_sorted[epoch_num-3:])
-
-        # print p[i:i + 9]
-        # pfile[idx] = np.amax(p[i:i + 9])
-
-        # p_buf = p[i:i+epoch_num]
-        # isvalid = np.sum(valid_signal_flags[i:i+epoch_num, :], axis=1)
-        # # print isvalid.shape
-        # p_buf = p_buf[isvalid > 0]
-        # if len(p_buf) > 0:
-        #     p_res[idx] = np.mean(p_buf)
-        # else:
-        #     p_res[idx] = 0
 
         for j in range(0, epoch_num, 1):
             p_x[idx, j] = p[i+j]
@@ -511,6 +470,7 @@ auc_list = []
 Y = []
 P = []
 F = []
+test_predictions = []
 for pat in pat_list:
     print 'Patient = ' + str(pat)
     x, y, fnames_train = load_train_competition(feature_names, pat, path)
@@ -568,8 +528,6 @@ for pat in pat_list:
         # Model evaluation path
         mean_auc, best_classifier, probabilities, y_r, probabilities_epoch = model_evaluate(x, y, valid_signal_flags_train, epoch_num)
         auc_list.append(mean_auc)
-        # Y.append(y.tolist())
-        # P.append(probabilities.tolist())
         Y = np.concatenate((Y, y_r))
         P = np.concatenate((P, probabilities))
         fnames_train = fnames_train[0:len(fnames_train):epoch_num]
@@ -591,10 +549,13 @@ for pat in pat_list:
         idx += 1
 
     # Save results to file 
-    output_fname = 'pat_' + str(pat) + '.csv'
+    # output_fname = 'pat_' + str(pat) + '.csv'
     df = pd.DataFrame({'File': ffile, 'Class': pfile}, columns=['File', 'Class'], index=None)
-    df.to_csv(output_fname, sep=',', header=True, float_format='%.8f', index=False)
+    # df.to_csv(output_fname, sep=',', header=True, float_format='%.8f', index=False)
 
+    test_predictions.append(df)
+
+# Overall AUC estimations:
 if eval_flag:
     print '*** Overall Mean AUC = ' + str(np.mean(auc_list)) + ' ***'
 
@@ -606,22 +567,22 @@ if eval_flag:
     roc_auc = auc(fpr, tpr)
     print '*** Overall AUC = ' + str(roc_auc) + ' ***'
 
-    df = pd.DataFrame({'File': F, 'Class': P, 'RealClass': Y}, columns=['File', 'Class', 'RealClass'], index=None)
-    df.to_csv('train_submission.csv', sep=',', header=True, index=False)
+    # df = pd.DataFrame({'File': F, 'Class': P, 'RealClass': Y}, columns=['File', 'Class', 'RealClass'], index=None)
+    # df.to_csv('train_submission.csv', sep=',', header=True, index=False)
 
 print 'Saving results to files'
-df1 = pd.read_csv('pat_1.csv', header = 0)
-df2 = pd.read_csv('pat_2.csv', header = 0)
-df3 = pd.read_csv('pat_3.csv', header = 0)
+# df1 = pd.read_csv('pat_1.csv', header = 0)
+# df2 = pd.read_csv('pat_2.csv', header = 0)
+# df3 = pd.read_csv('pat_3.csv', header = 0)
 
-frames = [df1, df2, df3]
-result = pd.concat(frames)
+# frames = [df1, df2, df3]
+# result = pd.concat(frames)
 
-result.to_csv(spath + 'submission_rf_starterOld_spectralV0_0.csv', sep=',', header=True, index=False)
+result = pd.concat(test_predictions)
+
+result.to_csv(spath + 'submission.csv', sep=',', header=True, index=False)
 
 # plt.show()
 
 now = time.strftime("%c")
 print ('Done at ' + now)
-
-
