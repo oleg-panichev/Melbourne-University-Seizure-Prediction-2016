@@ -692,7 +692,8 @@ def extract(input_path, output_path, output_label, safe_files_list):
 
 ## ---------------------------------------------------------------------------------------------------------------------
 ## Config
-db_path = 'E:/DB/NIH_sp/'
+# db_path = 'E:/DB/NIH_sp/'
+db_path = '../input/'
 # files_path = ['train_3/']
 # files_path = ['train_2/']
 # files_path = ['train_1/', 'test_1/', 'test_2/', 'test_3/']

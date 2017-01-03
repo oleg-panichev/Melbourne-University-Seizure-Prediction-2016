@@ -28,13 +28,15 @@ import xgboost
 # Serialize models
 import pickle
 
+np.random.seed(0)
+
 def model_create(model_name):
     if model_name == 'ada55':
         classifier = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
                          algorithm="SAMME",
                          n_estimators=5)
     elif model_name == 'xgb':
-        classifier = xgboost.XGBClassifier(n_estimators=800)
+        classifier = xgboost.XGBClassifier(n_estimators=800, seed=0)
     elif model_name == 'gb':
         classifier = GradientBoostingClassifier(n_estimators=1000) 
     elif model_name == 'rf':
@@ -285,12 +287,15 @@ class ModelDescriptor:
         self.model_name = model_name
 
 
-# path = 'E:/GoogleDrive/nih_features/'
+## ---------------------------------------------------------------------------------------------------------------------
+## Config
+# path = 'E:/GoogleDrive/nih_features/' # path where features are stored
 path = '/users/oleg/Google Drive/nih_features/' # path where features are stored
-spath = 'submissions/' # path to store submission files
-mpath = 'models/' # path to store models
-ppath = 'fprop/' # path to store mean, std and indexes of valid features from packs
-pat_list = [1, 2, 3]
+# path = '../input/' # path where features are stored
+spath = '../output/submissions/' # path to store submission files
+mpath = '../output/models/' # path to store models
+ppath = '../output/fprop/' # path to store mean, std and indexes of valid features from packs
+pat_list = [1, 2, 3] # Patients
 
 md_list = []
 
@@ -401,10 +406,10 @@ for md in md_list:
         pickle.dump(valid_features_idx, open(ppath + 'validf_' + model_name.split('_')[0] + '_pat' + str(pat), 'wb'))
 
         # Features normalization
-        for i in range(0, x_test.shape[1]):
-            x_std = np.std(x_test[:, i])
-            if x_std > 0.01:
-                x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
+        # for i in range(0, x_test.shape[1]):
+        #     x_std = np.std(x_test[:, i])
+        #     if x_std > 0.01:
+        #         x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
             # else:
             #     x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))
 

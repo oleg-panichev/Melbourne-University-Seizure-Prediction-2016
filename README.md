@@ -3,6 +3,10 @@ https://www.kaggle.com/c/melbourne-university-seizure-prediction
 
 This code is the solution of team nullset, which took 5-th place in private leaderboard in Melbourne University AES/MathWorks/NIH Seizure Prediction.
 
+### Team:
+  * Oleg Panichev (https://github.com/oleg-panichev)
+  * Irina Ivanenko (https://github.com/IraAI)
+
 ### Dependencies
   * Python 2.7
   * scikit-learn
@@ -11,10 +15,10 @@ This code is the solution of team nullset, which took 5-th place in private lead
   * scipy
   * xgboost 
 
-### AUC score on LeaderBoard
-  
-  public : 0.81423
-  private: 0.79363
+### AUC score on the Leaderboard
+
+  * public: 0.81423
+  * private: 0.79363
 
 ### Description
 Post on the Kaggle forum:
@@ -68,3 +72,13 @@ Final result P was calculated as follows:
 
 P = 1/13 * (3*Model 1 + Model 2 + Model 3 + 3*Model 4 + 3*Model 5 + Model 6 + Model 7)
 
+### How to run
+
+1. First you need to extract features. Use scripts from 'features_extraction.py' and 'features_extraction_reina.py'. To run this scripts on your machine you need to change config variables (lines 639-650 in 'features_extraction.py' and lines 695-702 in 'features_extraction_reina.py'). 'features_extraction_reina.py' extracts fractal dimension features and it may take a lot of time. Extracted features are available here:
+https://drive.google.com/drive/folders/0B4orCuBRwwdYa1Y3YlpwcW5VWEE
+2. After features extracted run script 'train_models.py'. This script reads train data for each patients, train all needed models, saves them into files and makes prediction on test data. Config it changing appropriate variables on lines 290-298. Fitted models are stored in 'models/' folder, generated submission files are stored in 'submissions/' folder.
+3. After that script from 'submission_ensembling.py' should by ran to combine all submissions from models into ensemble and generate final submission file.
+
+Notes:
+  * Unfortunately, we haven't used np.random.seed() during competition and made ensembles just from good submissions on Kaggle. That is why some models like Random Forest cannot be reproduced and the same results cannot be achieved. Random Forest generates results which have high variance on both public and private leaderboards.
+  * Also, we had no time to optimize a feature extraction stack. For example, current version uses four packs of features called "starter_old", "starter", "spectral_v0" and "reina_e30". Packs "starter_old" and "starter" are almost the same, but "starter_old" has additional 120 features - correlation between spectras of all EEG channels. So the same features extracted twice. Another thing is "starter" and "reina_e30" packs. Features from pack "reina_e30" were extracted with a little different parameters, some of them are absolutely the same as in "starter" pack. "reina_e30" pack has additional fractal dimensions features. 

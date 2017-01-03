@@ -167,46 +167,47 @@ class ModelDescriptor:
         self.model_name = model_name
 
 
-# path = 'updated_features/'
-# path = 'E:/GoogleDrive/nih_features/'
-# path = '/media/usr/54532AD595ED8860/GoogleDrive/nih_features/'
+## ---------------------------------------------------------------------------------------------------------------------
+## Config
+# path = 'E:/GoogleDrive/nih_features/' # path where features are stored
 path = '/users/oleg/Google Drive/nih_features/' # path where features are stored
-spath = 'submissions/' # path to store submission files
-mpath = 'models/' # path to store models
-ppath = 'fprop/' # path to store mean, std and indexes of valid features from packs
-pat_list = [1, 2, 3]
+# path = '../input/' # path where features are stored
+spath = '../output/submissions/' # path to store submission files
+mpath = '../output/models/' # path to store models
+ppath = '../output/fprop/' # path to store mean, std and indexes of valid features from packs
+pat_list = [1, 2, 3] # Patients
 
 md_list = []
 
-# # Model 1:
-# feature_names = ['starter']
-# model_name = 'gb'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 1:
+feature_names = ['starter']
+model_name = 'gb'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
-# # Model 2:
-# feature_names = ['starter']
-# model_name = 'xgb'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 2:
+feature_names = ['starter']
+model_name = 'xgb'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
-# # Model 3:
-# feature_names = ['starter']
-# model_name = 'vot'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 3:
+feature_names = ['starter']
+model_name = 'vot'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
-# # Model 4:
-# feature_names = ['starter_old', 'spectral_v0']
-# model_name = 'ada55_0'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 4:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'ada55_0'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
-# # Model 5:
-# feature_names = ['starter_old', 'spectral_v0']
-# model_name = 'rf_0'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 5:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'rf_0'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
-# # Model 6:
-# feature_names = ['starter_old', 'spectral_v0']
-# model_name = 'gs'
-# md_list.append(ModelDescriptor(feature_names, model_name))
+# Model 6:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'gs'
+md_list.append(ModelDescriptor(feature_names, model_name))
 
 # Model 7:
 feature_names = ['reina_e30']
