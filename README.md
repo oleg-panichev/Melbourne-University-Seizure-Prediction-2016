@@ -79,6 +79,6 @@ https://drive.google.com/drive/folders/0B4orCuBRwwdYa1Y3YlpwcW5VWEE
 2. After features extracted run script 'train_models.py'. This script reads train data for each patients, train all needed models, saves them into files and makes prediction on test data. Config it changing appropriate variables on lines 290-298. Fitted models are stored in 'models/' folder, generated submission files are stored in 'submissions/' folder.
 3. After that script from 'submission_ensembling.py' should by ran to combine all submissions from models into ensemble and generate final submission file.
 
-Notes:
+### Notes:
   * Unfortunately, we haven't used np.random.seed() during competition and made ensembles just from good submissions on Kaggle. That is why some models like Random Forest cannot be reproduced and the same results cannot be achieved. Random Forest generates results which have high variance on both public and private leaderboards.
   * Also, we had no time to optimize a feature extraction stack. For example, current version uses four packs of features called "starter_old", "starter", "spectral_v0" and "reina_e30". Packs "starter_old" and "starter" are almost the same, but "starter_old" has additional 120 features - correlation between spectras of all EEG channels. So the same features extracted twice. Another thing is "starter" and "reina_e30" packs. Features from pack "reina_e30" were extracted with a little different parameters, some of them are absolutely the same as in "starter" pack. "reina_e30" pack has additional fractal dimensions features. 
