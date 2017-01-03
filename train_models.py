@@ -1,4 +1,5 @@
 # coding: utf-8
+import os
 import time
 import math
 import pandas as pd
@@ -17,64 +18,28 @@ from sklearn.model_selection import StratifiedKFold, GridSearchCV
 # Classifiers:
 from sklearn import svm
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import BaggingClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
-from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import BaggingClassifier
 import xgboost
 
+# Serialize models
+import pickle
 
-from sklearn.pipeline import Pipeline
-
-from sklearn.calibration import CalibratedClassifierCV
-
-from sklearn.feature_selection import RFE
-from sklearn.svm import SVR
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-
-# Outliers:
-from sklearn.ensemble import IsolationForest
-
-from sklearn.base import BaseEstimator, ClassifierMixin
-class CustomEnsembleClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, classifiers=None):
-        self.classifiers = classifiers
-
-    def fit(self, X, y):
-        for classifier in self.classifiers:
-            classifier.fit(X, y)
-
-    def predict_proba(self, X):
-        self.predictions_ = list()
-        for classifier in self.classifiers:
-            self.predictions_.append(classifier.predict_proba(X))
-
-        return np.mean(self.predictions_, axis=0)
-
-def model_create(type):
-    if type == 'ada55':
+def model_create(model_name):
+    if model_name == 'ada55':
         classifier = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
                          algorithm="SAMME",
                          n_estimators=5)
-    elif type == 'xgb':
+    elif model_name == 'xgb':
         classifier = xgboost.XGBClassifier(n_estimators=800)
-    elif type == 'gb':
+    elif model_name == 'gb':
         classifier = GradientBoostingClassifier(n_estimators=1000) 
-    elif type == 'rf':
+    elif model_name == 'rf':
         classifier = RandomForestClassifier() 
-    elif type == 'gs1':
+    elif model_name == 'vot':
         param_grid = {"base_estimator__criterion" : ["gini"], "base_estimator__splitter" :   ["best"],  "n_estimators": [3,5, 6]}
         DTC = DecisionTreeClassifier(max_depth=5)
         ABC = AdaBoostClassifier(base_estimator = DTC, algorithm="SAMME", learning_rate=1, n_estimators=5)
@@ -82,144 +47,19 @@ def model_create(type):
         clf2 = GradientBoostingClassifier(n_estimators=1000)
         clf3 = BaggingClassifier()
         classifier = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('rtf', clf3)], voting='soft') 
-    elif type == 'gs2':
+    elif model_name == 'gs':
         clf1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5), algorithm="SAMME")
         param_grid = {'n_estimators': [4, 5, 6]}
         classifier = GridSearchCV(clf1, param_grid=param_grid, scoring='roc_auc')
-    elif type == 'rf_reina':
+    elif model_name == 'rfreina':
         classifier = RandomForestClassifier(n_estimators=50) 
-
-
-    # classifier = svm.SVC(kernel='rbf', probability=True,
-    #                      random_state=None)
-
-    # classifier = svm.NuSVC(probability=True)
-
-    # classifier = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                      algorithm="SAMME",
-    #                      n_estimators=5)
-
-    # classifier = AdaBoostClassifier(LogisticRegression(),
-    #                                 algorithm="SAMME",
-    #                                 n_estimators=100)
-
-    # classifier = CalibratedClassifierCV(classifier, method='sigmoid', cv=5)
-
-    # classifier = AdaBoostClassifier(GaussianNB(),
-    #                                 algorithm="SAMME",
-    #                                 n_estimators=5)
-
-    # classifier = BaggingClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                      algorithm="SAMME",
-    #                      n_estimators=5),
-    #                    max_samples = 0.5, max_features = 0.5, n_jobs= 1)
-
-    # classifier = GaussianNB()
-
-    # classifier = BernoulliNB()
-
-    # classifier = DecisionTreeClassifier(max_depth=5)
-
-    # classifier = RandomForestClassifier(max_depth=1, n_estimators=50, n_jobs=4)#, max_features=100)
-    classifier = RandomForestClassifier()
-
-    # classifier = ExtraTreesClassifier(n_estimators=20, max_depth=2, min_samples_split = 2, random_state = 0, max_features=100)
-
-    # classifier = KNeighborsClassifier(n_neighbors=1)
-
-    # classifier = LogisticRegression()
-
-    # classifier = LogisticRegressionCV()
-
-    # classifier = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
-
-    # classifier = LinearDiscriminantAnalysis(solver='eigen', shrinkage='auto')
-
-    # classifier = QuadraticDiscriminantAnalysis()
-
-    # classifier = MLPClassifier(alpha=0.5)
-
-    # classifier = MLPClassifier(solver='adam', alpha=1e-5, hidden_layer_sizes = (30, 20, 10), random_state = 1)
-
-    # classifier = GradientBoostingClassifier(n_estimators=1) #, learning_rate=0.5, max_depth = 5, random_state = 0)
-    # classifier = GradientBoostingClassifier(n_estimators=100)
-
-    # classifier = xgboost.XGBClassifier(n_estimators=800)
-
-    # classifier = Pipeline([
-    #     ('feature_selection', SelectFromModel(LinearSVC())),
-    #     ('classification', AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                      algorithm="SAMME",
-    #                      n_estimators=5))
-    # ])
-
-    # classifier = xgboost.XGBClassifier(silent=1, nthread=3, max_depth=5)
-
-    # classifier = TfMultiLayerPerceptron(eta=0.5,
-    #                              epochs=20,
-    #                              hidden_layers=[10],
-    #                              activations=['logistic'],
-    #                              optimizer='gradientdescent',
-    #                              print_progress=3,
-    #                              minibatches=1,
-    #                              random_seed=1)
-
-    # # clf1 = GaussianNB()
-    # clf2 = DecisionTreeClassifier(max_depth=6)
-    # clf2_1 = DecisionTreeClassifier(max_depth=5)
-    # clf2_2 = DecisionTreeClassifier(max_depth=7)
-    # # clf3 = LogisticRegression()
-    # # clf4 = KNeighborsClassifier()
-    # # clf4_1 = KNeighborsClassifier(n_neighbors=1)
-    # # clf5 = ExtraTreesClassifier()
-    # # clf5_1 = ExtraTreesClassifier(n_estimators=20)
-    # clf6 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                                                 algorithm="SAMME",
-    #                                                 n_estimators=5)
-    # clf6_1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                           algorithm="SAMME",
-    #                           n_estimators=4)
-    # clf6_2 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),
-    #                           algorithm="SAMME",
-    #                           n_estimators=6)
-    # clf6_3 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=6),
-    #                           algorithm="SAMME",
-    #                           n_estimators=5)
-    # clf6_4 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=4),
-    #                           algorithm="SAMME",
-    #                           n_estimators=5)
-    #
-    # clf7 = RandomForestClassifier()
-    # clf7_1 = RandomForestClassifier(n_estimators=20)
-    # clf7_2 = RandomForestClassifier(n_estimators=5)
-    # clf8 = GradientBoostingClassifier()
-    # clf8_1 = GradientBoostingClassifier(n_estimators=200)
-    # clf9 = xgboost.XGBClassifier()
-    # clf9_1 = xgboost.XGBClassifier(n_estimators=200)
-    # clf9_2 = xgboost.XGBClassifier(n_estimators=50)
-    # classifier = CustomEnsembleClassifier([#clf1,
-    #                                        clf2, clf2_1, clf2_2,
-    #                                        #clf3,
-    #                                        #clf4, clf4_1,
-    #                                        #clf5, clf5_1,
-    #                                        clf6, clf6_1, clf6_2, clf6_3, clf6_4,
-    #                                        clf7, clf7_1, clf7_2,
-    #                                        clf8, clf8_1,
-    #                                        clf9, clf9_1, clf9_2
-    # ])
-
-
-    # clf3 = GradientBoostingClassifier(n_estimators=1000)
-    # classifier = VotingClassifier([('ada5', clf1), ('dt5', clf2), ('gb1000', clf3)], weights=[1, 1], voting='soft')
-
-    # clf1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5), algorithm="SAMME")
-    # param_grid = {'n_estimators': [4, 5, 6]}
-    # classifier = GridSearchCV(clf1, param_grid=param_grid, scoring='roc_auc')
+    else:
+        raise ValueError('There are no model of type \'' + model_name + '\'')
 
     return classifier
 
 
-def model_fit(classifier, x, y, valid_signal_flags_train):
+def model_fit(classifier, x, y):
     classifier.fit(x, y)
     return classifier
 
@@ -229,7 +69,7 @@ def model_predict(classifier, x_test):
     return p
 
 
-def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
+def model_evaluate(model_name, x, y, epoch_num):
     cv = StratifiedKFold(n_splits=6, shuffle=False)
     
     mean_tpr = 0.0
@@ -263,19 +103,13 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
                 test_full[k*epoch_num + j] = test[k]*epoch_num + j
 
         # print 'Model fitting...'
-        classifier = model_create()
-        if len(valid_signal_flags_train) > 0:
-            classifier = model_fit(classifier, x[train_full], y[train_full], valid_signal_flags_train[train_full])
-        else:
-            classifier = model_fit(classifier, x[train_full], y[train_full], valid_signal_flags_train)
+        classifier = model_create(model_name)
+        classifier = model_fit(classifier, x[train_full], y[train_full])
 
         # print 'Predicting...'
         probas = model_predict(classifier, x[test_full])
 
-        if len(valid_signal_flags_train) > 0:
-            p, p_x = prob_decide(probas[:, 1], valid_signal_flags_train[test_full], epoch_num)
-        else:
-            p, p_x = prob_decide(probas[:, 1], valid_signal_flags_train, epoch_num)
+        p, p_x = prob_decide(probas[:, 1], epoch_num)
 
         probabilities[test] = p
         probabilities_epoch[test, :] = p_x
@@ -317,19 +151,19 @@ def model_evaluate(x, y, valid_signal_flags_train, epoch_num):
     return mean_auc, best_classifier, probabilities, y_r, probabilities_epoch
 
 
-def model_run(x, y, valid_signal_flags_train, x_test):
+def model_run(model_name, x, y, x_test):
     print 'Creating model on whole train set...'
-    classifier = model_create()
+    classifier = model_create(model_name)
 
     print 'Model fitting...'
-    classifier = model_fit(classifier, x, y, valid_signal_flags_train)
+    classifier = model_fit(classifier, x, y)
 
     print 'Predicting...'
     p = model_predict(classifier, x_test)
-    return p
+    return classifier, p
 
 
-def prob_decide(p, valid_signal_flags, epoch_num):
+def prob_decide(p, epoch_num):
     N = p.shape
     N = N[0]
 
@@ -440,149 +274,214 @@ def load_test(feature_names, patient_i, path):
         else:
             x_test = np.concatenate((x_test, data[:, 2:]), axis=1)
 
-        print 'Test: Number of observations = ' + str(x_test.shape[0]) + ' and number of features = ' + str(x_test.shape[1])
+    print 'Test: Number of observations = ' + str(x_test.shape[0]) + ' and number of features = ' + str(x_test.shape[1])
 
-        return x_test, fnames
+    return x_test, fnames
 
 
-# path = 'updated_features/'
+class ModelDescriptor:
+    def __init__(self, feature_names, model_name):
+        self.feature_names = feature_names
+        self.model_name = model_name
+
+
 # path = 'E:/GoogleDrive/nih_features/'
-# path = '/media/usr/54532AD595ED8860/GoogleDrive/nih_features/'
-path = '/users/oleg/Google Drive/nih_features/'
-spath = 'submits_oldschool/'
+path = '/users/oleg/Google Drive/nih_features/' # path where features are stored
+spath = 'submissions/' # path to store submission files
+mpath = 'models/' # path to store models
+ppath = 'fprop/' # path to store mean, std and indexes of valid features from packs
 pat_list = [1, 2, 3]
-# feature_names = ['spectral_v1']#'['starter', 'corrc', 'spectral_v0']#, 'spectral_psd_v1']
-# feature_names = ['starter', 'corrc', 'spectral_v0']
-# feature_names = ['reina_e30', 'spectral_v0']#['starter_old', 'spectral_v0']
-# feature_names = ['ada5p']
-# feature_names = ['starter_v1_e60', 'spectral_v3_e60']
-feature_names = ['starter_old', 'spectral_v0']#, 'spectral_psd_v1']#_old', 'spectral_v0']
-# feature_names = ['reina_e30']
-valid_signal_fname = ''#''valid_signal'
-# all feature names = ['starter', 'corrc', 'spectral_v0','spectral_v1]
+
+md_list = []
+
+# Model 1:
+feature_names = ['starter']
+model_name = 'gb'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 2:
+feature_names = ['starter']
+model_name = 'xgb'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 3:
+feature_names = ['starter']
+model_name = 'vot'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 4:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'ada55_0'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+model_name = 'ada55_1'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+model_name = 'ada55_2'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 5:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'rf_0'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+model_name = 'rf_1'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+model_name = 'rf_2'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 6:
+feature_names = ['starter_old', 'spectral_v0']
+model_name = 'gs'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
+# Model 7:
+feature_names = ['reina_e30']
+model_name = 'rfreina'
+md_list.append(ModelDescriptor(feature_names, model_name))
+
 epoch_num = 20
 eval_flag = 0
 
 now = time.strftime("%c")
 print ('Started at ' + now)
 
-auc_list = []
-Y = []
-P = []
-F = []
-test_predictions = []
-for pat in pat_list:
-    print 'Patient = ' + str(pat)
-    x, y, fnames_train = load_train_competition(feature_names, pat, path)
-    # x, y, fnames_train = load_train(feature_names, pat, path) # uncomment this to work without loading data from old test set in competition
+for md in md_list:
+    print('********************* ' + md.model_name + ' *********************')
+    feature_names = md.feature_names
+    model_name = md.model_name
 
-    x_test, fnames = load_test(feature_names, patient_i, path)
-    
-    print 'Train: Number of -Inf = ' + str(len(x[x > 9999999])) + ', number if -Inf = ' + \
-          str(len(x[x < -9999999]))
-    print 'Test: Number of -Inf = ' + str(len(x_test[x_test>9999999])) + ', number if -Inf = ' + \
-          str(len(x_test[x_test<-9999999]))
+    auc_list = []
+    Y = []
+    P = []
+    F = []
+    test_predictions = []
+    for pat in pat_list:
+        print 'Patient = ' + str(pat)
+        x, y, fnames_train = load_train_competition(feature_names, pat, path)
+        # x, y, fnames_train = load_train(feature_names, pat, path) # uncomment this to work without loading data from old test set in competition
 
-    # Remove Inf and -Inf from data
-    x[x > 9999999] = 0
-    x[x < -9999999] = 0
-    x_test[x_test > 9999999] = 0
-    x_test[x_test < -9999999] = 0
-    print 'Train: Number of -Inf = ' + str(len(x[x > 9999999])) + ', number if -Inf = ' + \
-          str(len(x[x < -9999999]))
-    print 'Test: Number of -Inf = ' + str(len(x_test[x_test > 9999999])) + ', number if -Inf = ' + \
-          str(len(x_test[x_test < -9999999]))
+        x_test, fnames = load_test(feature_names, pat, path)
+        
+        print 'Train: Number of -Inf = ' + str(len(x[x > 9999999])) + ', number if -Inf = ' + \
+              str(len(x[x < -9999999]))
+        print 'Test: Number of -Inf = ' + str(len(x_test[x_test>9999999])) + ', number if -Inf = ' + \
+              str(len(x_test[x_test<-9999999]))
 
-    # Features normalization and validation
-    valid_features_idx = np.zeros(x.shape[1], dtype='bool')
-    for i in range(0, x.shape[1]):
-        x_mean = np.mean(x[:, i])
-        x_std = np.std(x[:, i])
-        # print x_std
+        # Remove Inf and -Inf from data
+        x[x > 9999999] = 0
+        x[x < -9999999] = 0
+        x_test[x_test > 9999999] = 0
+        x_test[x_test < -9999999] = 0
 
-        if x_std > 0.01:
-            x[:, i] = (x[:, i] - x_mean) / x_std
-            # x_test[:, i] = (x_test[:, i] - x_mean) / x_std
-        else:
-            x[:, i] = (x[:, i] - np.mean(x[:, i]))
+        # Features normalization and validation
+        valid_features_idx = np.zeros(x.shape[1], dtype='bool')
+        x_mean = np.zeros(x.shape[1])
+        x_std = np.zeros(x.shape[1])
+        for i in range(0, x.shape[1]):
+            x_mean[i] = np.mean(x[:, i])
+            x_std[i] = np.std(x[:, i])
+            # print x_std
 
-        if x_std > 0:
-            valid_features_idx[i] = 1
+            if x_std[i] > 0.01:
+                x[:, i] = (x[:, i] - x_mean[i]) / x_std[i]
+                x_test[:, i] = (x_test[:, i] - x_mean[i]) / x_std[i]
+            # else:
+            #     x[:, i] = (x[:, i] - x_mean[i])
+            #     x_test[:, i] = (x_test[:, i] - x_mean[i]) 
 
-    # Features normalization
-    for i in range(0, x_test.shape[1]):
-        x_std = np.std(x_test[:, i])
-        if x_std > 0.01:
-            x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
-        # else:
-        #     x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))
+            if x_std[i] > 0:
+                valid_features_idx[i] = 1
 
-    # Remove non-valid features
-    x = x[:, valid_features_idx]
-    x_test = x_test[:, valid_features_idx]
+        if not os.path.exists(ppath):
+            os.makedirs(ppath)
+        pickle.dump(x_mean, open(ppath + 'xmean_' + model_name.split('_')[0] + '_pat' + str(pat), 'wb'))
+        pickle.dump(x_std, open(ppath + 'xstd_' + model_name.split('_')[0] + '_pat' + str(pat), 'wb'))
+        pickle.dump(valid_features_idx, open(ppath + 'validf_' + model_name.split('_')[0] + '_pat' + str(pat), 'wb'))
 
-    print 'Train: Number of observations = ' + str(x.shape[0]) + ' and number of features = ' + str(x.shape[1])
-    print 'Test: Number of observations = ' + str(x_test.shape[0]) + ' and number of features = ' + str(x_test.shape[1])
+        # Features normalization
+        for i in range(0, x_test.shape[1]):
+            x_std = np.std(x_test[:, i])
+            if x_std > 0.01:
+                x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
+            # else:
+            #     x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))
 
+        # Remove non-valid features
+        x = x[:, valid_features_idx]
+        x_test = x_test[:, valid_features_idx]
+
+        print 'Train: Number of observations = ' + str(x.shape[0]) + ' and number of features = ' + str(x.shape[1])
+        print 'Test: Number of observations = ' + str(x_test.shape[0]) + ' and number of features = ' + str(x_test.shape[1])
+
+        if eval_flag:
+            # Model evaluation path
+            mean_auc, best_classifier, probabilities, y_r, probabilities_epoch = model_evaluate(model_name.split('_')[0], x, y, epoch_num)
+            auc_list.append(mean_auc)
+            Y = np.concatenate((Y, y_r))
+            P = np.concatenate((P, probabilities))
+            fnames_train = fnames_train[0:len(fnames_train):epoch_num]
+            F = np.concatenate((F, fnames_train))
+
+        # Model test path (Kaggle)
+        classifier, probas = model_run(model_name.split('_')[0], x, y, x_test)
+
+        # Evaluate probability for class basing on epochs classification
+        pfile, probabilities_test = prob_decide(probas[:, 1], epoch_num)
+
+        print 'Saving the model...'
+        if not os.path.exists(mpath):
+            os.makedirs(mpath)
+        pickle.dump(classifier, open(mpath + 'model_' + model_name + '_pat' + str(pat), 'wb'))
+
+        # Create list of file names for submission
+        M = len(fnames) / epoch_num
+        ffile = np.empty(M, dtype='S20')
+
+        idx = 0
+        for i in range(0, len(fnames), epoch_num):
+            ffile[idx] = fnames[i]
+            idx += 1
+
+        # Save results to file 
+        if not os.path.exists(spath):
+            os.makedirs(spath)
+        df = pd.DataFrame({'File': ffile, 'Class': pfile}, columns=['File', 'Class'], index=None)
+        df.to_csv(spath + 'submission_' + model_name + '_pat_' + str(pat) + '.csv', sep=',', header=True, float_format='%.8f', index=False)
+
+        test_predictions.append(df)
+
+    # Overall AUC estimations:
     if eval_flag:
-        # Model evaluation path
-        mean_auc, best_classifier, probabilities, y_r, probabilities_epoch = model_evaluate(x, y, valid_signal_flags_train, epoch_num)
-        auc_list.append(mean_auc)
-        Y = np.concatenate((Y, y_r))
-        P = np.concatenate((P, probabilities))
-        fnames_train = fnames_train[0:len(fnames_train):epoch_num]
-        F = np.concatenate((F, fnames_train))
+        print '*** Overall Mean AUC = ' + str(np.mean(auc_list)) + ' ***'
 
-    # Model test path (Kaggle)
-    probas = model_run(x, y, valid_signal_flags_train, x_test)
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        fpr, tpr, thresholds = roc_curve(Y, P)
+        mean_tpr += interp(mean_fpr, fpr, tpr)
+        mean_tpr[0] = 0.0
+        roc_auc = auc(fpr, tpr)
+        print '*** Overall AUC = ' + str(roc_auc) + ' ***'
 
-    # Evaluate probability for class basing on epochs classification
-    pfile, probabilities_test = prob_decide(probas[:, 1], valid_signal_flags_test, epoch_num)
+        # df = pd.DataFrame({'File': F, 'Class': P, 'RealClass': Y}, columns=['File', 'Class', 'RealClass'], index=None)
+        # df.to_csv('train_submission.csv', sep=',', header=True, index=False)
 
-    # Create list of file names for submission
-    M = len(fnames) / epoch_num
-    ffile = np.empty(M, dtype='S20')
+    print 'Saving results to files'
+    # df1 = pd.read_csv('pat_1.csv', header = 0)
+    # df2 = pd.read_csv('pat_2.csv', header = 0)
+    # df3 = pd.read_csv('pat_3.csv', header = 0)
 
-    idx = 0
-    for i in range(0, len(fnames), epoch_num):
-        ffile[idx] = fnames[i]
-        idx += 1
+    # frames = [df1, df2, df3]
+    # result = pd.concat(frames)
 
-    # Save results to file 
-    # output_fname = 'pat_' + str(pat) + '.csv'
-    df = pd.DataFrame({'File': ffile, 'Class': pfile}, columns=['File', 'Class'], index=None)
-    # df.to_csv(output_fname, sep=',', header=True, float_format='%.8f', index=False)
+    result = pd.concat(test_predictions)
 
-    test_predictions.append(df)
+    if not os.path.exists(spath):
+        os.makedirs(spath)
+    result.to_csv(spath + 'submission_' + model_name + '.csv', sep=',', header=True, index=False)
 
-# Overall AUC estimations:
-if eval_flag:
-    print '*** Overall Mean AUC = ' + str(np.mean(auc_list)) + ' ***'
-
-    mean_tpr = 0.0
-    mean_fpr = np.linspace(0, 1, 100)
-    fpr, tpr, thresholds = roc_curve(Y, P)
-    mean_tpr += interp(mean_fpr, fpr, tpr)
-    mean_tpr[0] = 0.0
-    roc_auc = auc(fpr, tpr)
-    print '*** Overall AUC = ' + str(roc_auc) + ' ***'
-
-    # df = pd.DataFrame({'File': F, 'Class': P, 'RealClass': Y}, columns=['File', 'Class', 'RealClass'], index=None)
-    # df.to_csv('train_submission.csv', sep=',', header=True, index=False)
-
-print 'Saving results to files'
-# df1 = pd.read_csv('pat_1.csv', header = 0)
-# df2 = pd.read_csv('pat_2.csv', header = 0)
-# df3 = pd.read_csv('pat_3.csv', header = 0)
-
-# frames = [df1, df2, df3]
-# result = pd.concat(frames)
-
-result = pd.concat(test_predictions)
-
-result.to_csv(spath + 'submission.csv', sep=',', header=True, index=False)
-
-# plt.show()
+    # plt.show()
 
 now = time.strftime("%c")
 print ('Done at ' + now)

@@ -506,7 +506,7 @@ def extract(input_path, output_path, output_label, safe_files_list):
         files_list = list_files(input_path)
 
     if calc_starter_v0_flag > 0:
-        starter_v0_features_file = open(output_path + output_label + '_starter_v0.csv', "w")
+        starter_v0_features_file = open(output_path + output_label + '_starter_old.csv', "w")
         starter_v0_str_buf = ''
 
     if calc_starter_flag > 0:
