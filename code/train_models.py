@@ -28,7 +28,7 @@ import xgboost
 # Serialize models
 import pickle
 
-np.random.seed(0)
+np.random.seed(42)
 
 def model_create(model_name):
     if model_name == 'ada55':
@@ -391,7 +391,7 @@ for md in md_list:
 
             if x_std[i] > 0.01:
                 x[:, i] = (x[:, i] - x_mean[i]) / x_std[i]
-                x_test[:, i] = (x_test[:, i] - x_mean[i]) / x_std[i]
+                # x_test[:, i] = (x_test[:, i] - x_mean[i]) / x_std[i]
             # else:
             #     x[:, i] = (x[:, i] - x_mean[i])
             #     x_test[:, i] = (x_test[:, i] - x_mean[i]) 
@@ -406,10 +406,10 @@ for md in md_list:
         pickle.dump(valid_features_idx, open(ppath + 'validf_' + model_name.split('_')[0] + '_pat' + str(pat), 'wb'))
 
         # Features normalization
-        # for i in range(0, x_test.shape[1]):
-        #     x_std = np.std(x_test[:, i])
-        #     if x_std > 0.01:
-        #         x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
+        for i in range(0, x_test.shape[1]):
+            x_std = np.std(x_test[:, i])
+            if x_std > 0.01:
+                x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))/np.std(x_test[:, i])
             # else:
             #     x_test[:, i] = (x_test[:, i] - np.mean(x_test[:, i]))
 

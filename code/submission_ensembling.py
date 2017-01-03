@@ -23,7 +23,7 @@ model_coef = [1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1]
 # model_names = ['vot', 'rf_0', 'gs', 'rfreina']
 # model_coef = [1, 3, 3, 1]
 
-spath = 'submissions/'
+spath = '../output/submissions/'
 
 n_files = 1908
 probas_buf = np.empty([n_files, len(model_names)])
