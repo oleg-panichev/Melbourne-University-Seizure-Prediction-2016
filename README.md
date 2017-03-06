@@ -8,7 +8,7 @@ This code is the solution of team nullset, which took 5-th place in private lead
   * Irina Ivanenko (https://github.com/IraAI)
 
 ### Dependencies
-  * Python 2.7
+  * Python 2.7.12
   * scikit-learn
   * numpy
   * pandas

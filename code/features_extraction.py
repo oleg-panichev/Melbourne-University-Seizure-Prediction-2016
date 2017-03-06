@@ -682,7 +682,7 @@ else:
         t.start()
 
     for t in threads:
-        t.join()s:
+        t.join():
     t.join()
 
 now = time.strftime("%c")
